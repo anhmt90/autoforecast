@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>tum.thesis.anhmt</groupId>
+    <artifactId>auto-forecast</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <!--<repositories>-->
+        <!--<repository>-->
+            <!--<id>osssonatype</id>-->
+            <!--<name>OSS Sonatype</name>-->
+            <!--<url>https://repo1.maven.org/maven2/</url>-->
+            <!--<layout>default</layout>-->
+        <!--</repository>-->
+    <!--</repositories>-->
+    <dependencies>
+        <dependency>
+            <groupId>net.rforge</groupId>
+            <artifactId>Rserve</artifactId>
+            <version>0.6-5</version>
+        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>tum.thesis.anhmt</groupId>-->
+            <!--<artifactId>auto-forecast</artifactId>-->
+            <!--<version>1.0</version>-->
+            <!--<scope>system</scope>-->
+            <!--<systemPath>${project.basedir}/libs/jri/JRI.jar</systemPath>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.nuiton.thirdparty</groupId>-->
+            <!--<artifactId>JRI</artifactId>-->
+            <!--<version>RELEASE</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.rosuda.REngine</groupId>-->
+            <!--<artifactId>REngine</artifactId>-->
+            <!--<version>2.1.0</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>com.github.lucarosellini.rJava</groupId>-->
+            <!--<artifactId>JRIEngine</artifactId>-->
+            <!--<version>0.9-7</version>-->
+        <!--</dependency>-->
+    </dependencies>
+    <build>
+        <plugins>
+
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-compiler-plugin</artifactId>-->
+                <!--<configuration>-->
+                    <!--<source>1.8</source>-->
+                    <!--<target>1.8</target>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-jar-plugin</artifactId>-->
+                <!--<configuration>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--<mainClass>Prediction</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.3.2</version>
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<goals>-->
+                            <!--<goal>java</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+                <configuration>
+                    <mainClass>Prediction</mainClass>
+                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                    <executable>java</executable>
+                    <!--<arguments>-->
+                        <!--<argument>-Djava.library.path=.:/usr/lib/R/site-library/rJava/jri/</argument>-->
+                    <!--</arguments>-->
+                </configuration>
+            </plugin>
+
+        </plugins>
+        <defaultGoal>install</defaultGoal>
+    </build>
+
+
+
+
+</project>
