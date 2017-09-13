@@ -7,83 +7,116 @@
     <groupId>tum.thesis.anhmt</groupId>
     <artifactId>auto-forecast</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <!--<repositories>-->
-        <!--<repository>-->
-            <!--<id>osssonatype</id>-->
-            <!--<name>OSS Sonatype</name>-->
-            <!--<url>https://repo1.maven.org/maven2/</url>-->
-            <!--<layout>default</layout>-->
-        <!--</repository>-->
-    <!--</repositories>-->
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+    <repositories>
+        <repository>
+            <id>bintray</id>
+            <url>https://dl.bintray.com/andsel/maven</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>bintray2</id>
+            <url>https://jcenter.bintray.com</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+
     <dependencies>
         <dependency>
-            <groupId>net.rforge</groupId>
+            <groupId>org.rosuda.REngine</groupId>
             <artifactId>Rserve</artifactId>
-            <version>0.6-5</version>
+            <version>1.8.1</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>tum.thesis.anhmt</groupId>-->
-            <!--<artifactId>auto-forecast</artifactId>-->
-            <!--<version>1.0</version>-->
-            <!--<scope>system</scope>-->
-            <!--<systemPath>${project.basedir}/libs/jri/JRI.jar</systemPath>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.nuiton.thirdparty</groupId>-->
-            <!--<artifactId>JRI</artifactId>-->
-            <!--<version>RELEASE</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.rosuda.REngine</groupId>-->
-            <!--<artifactId>REngine</artifactId>-->
-            <!--<version>2.1.0</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>com.github.lucarosellini.rJava</groupId>-->
-            <!--<artifactId>JRIEngine</artifactId>-->
-            <!--<version>0.9-7</version>-->
-        <!--</dependency>-->
+        <!--<dependency>
+            <groupId>org.toubassi.femtozip</groupId>
+            <artifactId>femtozip</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.moquette</groupId>
+            <artifactId>moquette-broker</artifactId>
+            <version>0.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.moquette</groupId>
+            <artifactId>moquette-broker</artifactId>
+            <version>0.8-SNAPSHOT</version>
+        </dependency>-->
+
     </dependencies>
     <build>
         <plugins>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-compiler-plugin</artifactId>-->
-                <!--<configuration>-->
-                    <!--<source>1.8</source>-->
-                    <!--<target>1.8</target>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-jar-plugin</artifactId>-->
-                <!--<configuration>-->
-                    <!--<archive>-->
-                        <!--<manifest>-->
-                            <!--<mainClass>Prediction</mainClass>-->
-                        <!--</manifest>-->
-                    <!--</archive>-->
-                <!--</configuration>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-jar-plugin</artifactId>-->
+            <!--<configuration>-->
+            <!--<archive>-->
+            <!--<manifest>-->
+            <!--<mainClass>Prediction</mainClass>-->
+            <!--</manifest>-->
+            <!--</archive>-->
+            <!--</configuration>-->
             <!--</plugin>-->
 
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.3.2</version>
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<goals>-->
-                            <!--<goal>java</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
+                    <!--<mainClass>SamplingBroker</mainClass>-->
                     <mainClass>Prediction</mainClass>
                     <cleanupDaemonThreads>false</cleanupDaemonThreads>
                     <executable>java</executable>
                     <!--<arguments>-->
-                        <!--<argument>-Djava.library.path=.:/usr/lib/R/site-library/rJava/jri/</argument>-->
+                    <!--<argument>-Djava.library.path=.:/usr/lib/R/site-library/rJava/jri/</argument>-->
                     <!--</arguments>-->
                 </configuration>
             </plugin>
@@ -91,8 +124,4 @@
         </plugins>
         <defaultGoal>install</defaultGoal>
     </build>
-
-
-
-
 </project>

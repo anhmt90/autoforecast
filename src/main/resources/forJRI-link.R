@@ -1,1 +1,0 @@
-/mnt/A43003F9E520D223/Dropbox/_b_thesis/_arima/forJRI.R
