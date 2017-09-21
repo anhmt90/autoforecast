@@ -31,7 +31,7 @@ public class PublisherHandler implements MqttCallback, Runnable {
 
     private Map<Integer, Long> msgSentTimestamps;
     private Map<Integer, Long> msgAckTimestamps;
-    
+
     private BufferedWriter df; //date format
 
 

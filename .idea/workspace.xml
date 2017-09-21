@@ -2,14 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c3fca998-c002-40bb-a9b8-8d0eed7fdfc4" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/auto-forecast.iml" afterPath="$PROJECT_DIR$/auto-forecast.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pom.xml" afterPath="$PROJECT_DIR$/pom.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/Prediction.java" afterPath="$PROJECT_DIR$/src/main/java/Prediction.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/PublisherHandler.java" afterPath="$PROJECT_DIR$/src/main/java/PublisherHandler.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/SamplingBrokerHandler.java" afterPath="$PROJECT_DIR$/src/main/java/SamplingBrokerHandler.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/SusbscriberHandler.java" afterPath="$PROJECT_DIR$/src/main/java/SusbscriberHandler.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -74,8 +67,8 @@
       <file leaf-file-name="PublisherHandler.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/PublisherHandler.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-17">
-              <caret line="33" column="4" lean-forward="false" selection-start-line="33" selection-start-column="4" selection-end-line="33" selection-end-column="4" />
+            <state relative-caret-position="289">
+              <caret line="51" column="52" lean-forward="false" selection-start-line="51" selection-start-column="52" selection-end-line="51" selection-end-column="52" />
               <folding />
             </state>
           </provider>
@@ -494,12 +487,12 @@
       <workItem from="1504629409773" duration="3751000" />
       <workItem from="1504633204880" duration="5898000" />
       <workItem from="1505292855687" duration="1067000" />
-      <workItem from="1505948303644" duration="4591000" />
+      <workItem from="1505948303644" duration="4771000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="59825000" />
+    <option name="totallyTimeSpent" value="60005000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -960,8 +953,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/PublisherHandler.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-17">
-          <caret line="33" column="4" lean-forward="false" selection-start-line="33" selection-start-column="4" selection-end-line="33" selection-end-column="4" />
+        <state relative-caret-position="289">
+          <caret line="51" column="52" lean-forward="false" selection-start-line="51" selection-start-column="52" selection-end-line="51" selection-end-column="52" />
           <folding />
         </state>
       </provider>
