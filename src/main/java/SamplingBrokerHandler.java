@@ -1,4 +1,3 @@
-
 import io.moquette.interception.AbstractInterceptHandler;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import io.moquette.interception.messages.InterceptSubscribeMessage;
@@ -7,14 +6,9 @@ import io.moquette.proto.messages.AbstractMessage;
 import io.moquette.proto.messages.PublishMessage;
 import io.moquette.server.Server;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.toubassi.femtozip.ArrayDocumentList;
 import org.toubassi.femtozip.models.FemtoZipCompressionModel;
-import sun.rmi.runtime.Log;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -35,7 +29,6 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
     private boolean createDictionary;
 
     public SamplingBrokerHandler(Server mqttBroker) {
-
         this.mqttBroker = mqttBroker;
         this.cfb = new CircularFifoQueue<>(500);
         dictionaries = new Hashtable<>();

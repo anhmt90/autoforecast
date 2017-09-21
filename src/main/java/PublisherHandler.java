@@ -31,8 +31,8 @@ public class PublisherHandler implements MqttCallback, Runnable {
 
     private Map<Integer, Long> msgSentTimestamps;
     private Map<Integer, Long> msgAckTimestamps;
-
-    private BufferedWriter df;
+    
+    private BufferedWriter df; //date format
 
 
     public PublisherHandler(MqttClient cl, LineIterator it) throws IOException {
