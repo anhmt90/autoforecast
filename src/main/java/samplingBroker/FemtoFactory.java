@@ -1,3 +1,7 @@
+package samplingBroker;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.toubassi.femtozip.models.FemtoZipCompressionModel;
 
 import java.io.*;
@@ -17,8 +21,11 @@ public class FemtoFactory {
 
         return compressionModel;
     }
-
+    /*
+        @return: a dictionary as byte array
+    */
     public static byte[] getDictionary(FemtoZipCompressionModel compressionModel) throws IOException {
+
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
         compressionModel.save(dos);
@@ -36,20 +43,12 @@ public class FemtoFactory {
         return dictFile.exists() && !dictFile.isDirectory();
     }
 
-    public static FemtoZipCompressionModel fromCache() throws IOException {
-        DataInputStream dis = new DataInputStream(new FileInputStream(getDictCacheFile().getAbsolutePath()));
-
-        FemtoZipCompressionModel compressionModel = new FemtoZipCompressionModel();
-        compressionModel.load(dis);
-
-        return compressionModel;
+    public static byte[] fromCache() throws IOException {
+        return IOUtils.toByteArray(new FileInputStream(getDictCacheFile()));
     }
 
     public static void toCache(FemtoZipCompressionModel compressionModel) throws IOException {
-        DataOutputStream dos = new DataOutputStream(new FileOutputStream(getDictCacheFile().getAbsolutePath()));
-
-        compressionModel.save(dos);
-        dos.flush();
-        dos.close();
+        FileUtils.writeByteArrayToFile(getDictCacheFile(), getDictionary(compressionModel));
     }
+
 }

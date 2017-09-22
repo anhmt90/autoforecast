@@ -1,4 +1,4 @@
-
+package samplingBroker;
 
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Properties;
 
 import static java.util.Arrays.asList;
-import static sun.net.www.protocol.http.AuthCacheValue.Type.Server;
-
 /**
  * Created by chris on 19.02.16.
  */
@@ -51,7 +49,6 @@ public class SamplingBroker {
         });
 
         Thread.sleep(Long.MAX_VALUE);
-
 
         System.out.println("Quit");
     }
