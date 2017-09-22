@@ -1,0 +1,130 @@
+[INFO] Scanning for projects...
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building auto-forecast 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ auto-forecast ---
+[INFO] Deleting /mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/target
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ auto-forecast ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 1 resource
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.5.1:compile (default-compile) @ auto-forecast ---
+[INFO] Changes detected - recompiling the module!
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 1 source file to /mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/target/classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ auto-forecast ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.5.1:testCompile (default-testCompile) @ auto-forecast ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.17:test (default-test) @ auto-forecast ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ auto-forecast ---
+[INFO] Building jar: /mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/target/auto-forecast-1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ auto-forecast ---
+[INFO] Installing /mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/target/auto-forecast-1.0-SNAPSHOT.jar to /home/mat/.m2/repository/tum/thesis/anhmt/auto-forecast/1.0-SNAPSHOT/auto-forecast-1.0-SNAPSHOT.jar
+[INFO] Installing /mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/pom.xml to /home/mat/.m2/repository/tum/thesis/anhmt/auto-forecast/1.0-SNAPSHOT/auto-forecast-1.0-SNAPSHOT.pom
+[INFO] 
+[INFO] --- exec-maven-plugin:1.3.2:java (default-cli) @ auto-forecast ---
+[WARNING] Warning: killAfter is now deprecated. Do you need it ? Please comment on MEXEC-6.
+The forecast is: 
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+375.70397130089435
+/mnt/A43003F9E520D223/Workplace/_b_project/autoforecast/src/main/resources/forRserve.R
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 02:56 min
+[INFO] Finished at: 2017-09-13T11:37:19+02:00
+[INFO] Final Memory: 17M/186M
+[INFO] ------------------------------------------------------------------------
