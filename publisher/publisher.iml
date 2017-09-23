@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="auto-forecast" />
     <orderEntry type="library" name="Maven: org.rosuda.REngine:Rserve:1.8.1" level="project" />
     <orderEntry type="library" name="Maven: org.rosuda.REngine:REngine:2.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.toubassi.femtozip:femtozip:1.0" level="project" />

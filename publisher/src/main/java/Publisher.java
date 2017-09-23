@@ -1,4 +1,4 @@
-package publisher;
+//package publisher;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -17,7 +17,7 @@ public class Publisher {
         System.out.println("<<<<<<<<<<<<<<<<<<<< Starting Publisher >>>>>>>>>>>>>>>>>>>>");
 
 //        LineIterator it = FileUtils.lineIterator(new File("D:\\Projects\\datasets\\debs2015\\debs2015.xml"), "UTF-8");
-        LineIterator it = FileUtils.lineIterator(new File("/home/chris/datasets/sdcdata/debs2015/debs2015.xml"), "UTF-8");
+        LineIterator it = FileUtils.lineIterator(new File("/mnt/A43003F9E520D223/Workplace/_data/meetup.json"), "UTF-8");
 
 
         //MqttClientPersistence s_dataStore;
