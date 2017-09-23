@@ -36,8 +36,8 @@ public class PublisherHandler implements MqttCallback, Runnable {
         this.cl = cl;
         this.it = it;
         dictionaries = new Hashtable<>();
-        compressedCnt = 0;
-        uncompressedCnt = 0;
+//        compressedCnt = 1;
+//        uncompressedCnt = 1;
     }
 
     //subscribe to DICT_TOPIC_NAME to receive dicts from the SB
@@ -52,7 +52,6 @@ public class PublisherHandler implements MqttCallback, Runnable {
         this.cl.publish(Const.TOPIC_NAME, new MqttMessage(ttemp));
 
         while(it.hasNext()) {
-            System.out.println("#cnt:" + uncompressedCnt);
 
             String next = (String)it.next();
             boolean empty = false;
@@ -63,44 +62,46 @@ public class PublisherHandler implements MqttCallback, Runnable {
             byte[] payload = next.getBytes();
 
             if(empty && !hasSentEndUnCompressionNotification) {
-                uncompressedCnt++;
                 if(!hasSentBeginUnCompressionNotification) {
                     byte[] temp = new byte[1];
                     temp[0] = -99;          //-99: code to indicate beginning of UNCOMPRESSED stream
                     this.cl.publish(Const.TOPIC_NAME, new MqttMessage(temp));
                     hasSentBeginUnCompressionNotification = true;
                     uncompressedCnt = 0;
-                    System.out.println("#meta:-99");
-                }
-                if(!hasSentEndUnCompressionNotification && (uncompressedCnt == 5000)){
-                    byte[] temp = new byte[1];
-                    temp[0] = -100;        //-100: code to indicate ending of UNCOMPRESSED stream
-                    this.cl.publish(Const.TOPIC_NAME, new MqttMessage(temp));
-                    hasSentEndUnCompressionNotification = true;
-                    System.out.println("#meta:-100");
+                    System.out.println("#meta:-99. Start of UNCOMPRESSED stream");
                 }
 
                 byte[] msg = new byte[payload.length + 1];
                 msg[0] = -1;                //-1: code to indicate that message payload is uncompressed
                 System.arraycopy(payload, 0, msg, 1, payload.length);
                 this.cl.publish(Const.TOPIC_NAME, new MqttMessage(msg));
-            }
-            else if(!empty && !hasSentEndCompressionNotification) {
+                uncompressedCnt++;
+                System.out.println("#"+uncompressedCnt+" published: " + msg.length + " bytes UNCOMP");
 
+                if(!hasSentEndUnCompressionNotification && (uncompressedCnt == 150)){
+                    byte[] temp = new byte[1];
+                    temp[0] = -100;        //-100: code to indicate ending of UNCOMPRESSED stream
+                    this.cl.publish(Const.TOPIC_NAME, new MqttMessage(temp));
+                    hasSentEndUnCompressionNotification = true;
+                    System.out.println("#meta:-100. End of UNCOMPRESSED stream");
+                }
+            }
+            /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  Compression >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
+            else if(!empty && !hasSentEndCompressionNotification) {
                 if(!hasSentBeginCompressionNotification) {
                     byte[] temp = new byte[1];
                     temp[0] = -101;         //-101: code to indicate beginning of COMPRESSED stream
                     this.cl.publish(Const.TOPIC_NAME, new MqttMessage(temp));
                     hasSentBeginCompressionNotification = true;
-                    compressedCnt = 0;
-                    System.out.println("#meta:-101");
+                    compressedCnt = 1;
+                    System.out.println("#meta:-101. Start of COMPRESSED stream");
                 }
-                if(!hasSentEndCompressionNotification && (compressedCnt == 5000)){
+                if(!hasSentEndCompressionNotification && (compressedCnt == 5000)){ //TODO change 5000 to dict age
                     byte[] temp = new byte[1];
                     temp[0] = -102;         //-102: code to indicate ending of COMPRESSED stream
                     this.cl.publish(Const.TOPIC_NAME, new MqttMessage(temp));
                     hasSentEndCompressionNotification = true;
-                    System.out.println("#meta:-102");
+                    System.out.println("#meta:-102. End of COMPRESSED stream");
                 }
 
                 byte b = latestDict();
@@ -113,15 +114,17 @@ public class PublisherHandler implements MqttCallback, Runnable {
                 byte[] msg = new byte[compressedMessage.length+1];
                 msg[0] = b;             //header is the key of the currently used dictionary
                 System.arraycopy(compressedMessage, 0, msg, 1, compressedMessage.length);
-                System.out.println("#published:" + msg.length);
                 this.cl.publish(Const.TOPIC_NAME, new MqttMessage(msg));
+                System.out.println("#"+compressedCnt+" published: " + msg.length + " bytes COMP");
                 compressedCnt++;
             }
             else {  //this case is when both UNCOMPRESSED and COMPRESSED streams have been ended
-                System.out.println("waiting for dict or finished");
+                System.out.println("Waiting for dict or finished");
                 Thread.sleep(1000);
             }
         }
+
+
     }
 
     private byte latestDict() {
@@ -151,13 +154,17 @@ public class PublisherHandler implements MqttCallback, Runnable {
 
         byte[] msgPayload = mqttMessage.getPayload();
         byte id = msgPayload[0];
+
+        if(id == -103){
+            System.out.println("Pub: cmdb received");
+        }
         if(id < -90) {
             return;         //the message arrived is not a dictionary -> do nothing here
         }
 
         byte[] payload = Arrays.copyOfRange(msgPayload, 1, msgPayload.length);
         if(s.equalsIgnoreCase(Const.DICT_TOPIC_NAME)) {     //receive and store the new dict into 'dictionaries'
-            System.out.println("#got-dictionary:" + payload.length + "#cnt:" + compressedCnt);
+            System.out.println("#got-dictionary: " + payload.length + " bytes");
             FemtoZipCompressionModel femtoZipCompressionModel1 = FemtoFactory.fromDictionary(payload);
             dictionaries.put(id, femtoZipCompressionModel1);
         }

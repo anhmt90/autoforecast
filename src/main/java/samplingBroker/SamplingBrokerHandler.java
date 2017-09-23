@@ -26,7 +26,8 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
     private final Server mqttBroker;
     private final CircularFifoQueue<byte[]> cfb;
     private final Dictionary<Byte, FemtoZipCompressionModel> dictionaries;
-    private long cnt;
+    private long uncompressedCnt;
+    private long compressedCnt;
     private byte dictionaryId;
     private boolean createDictionary;
 
@@ -35,7 +36,8 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
         this.mqttBroker = mqttBroker;
         this.cfb = new CircularFifoQueue<>(500);
         dictionaries = new Hashtable<>();
-        cnt = 0;
+        uncompressedCnt = 1;
+        compressedCnt = 1;
         dictionaryId = 1;
         createDictionary = false;
     }
@@ -46,36 +48,37 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
 
     @Override
     public void onPublish(InterceptPublishMessage msg) {
-        System.out.println("#onpublish:" + msg.getTopicName() + " #payload:" + msg.getPayload().array().length + "#cnt:" + cnt);
-
         if(msg.getTopicName().equalsIgnoreCase(Const.TOPIC_NAME)) {
             byte[] notification = msg.getPayload().array();
             byte header = notification[0];
-            cnt++;
 
             byte[] payload = Arrays.copyOfRange(notification, 1, notification.length);
 
             //-100: code to indicate ending of UNCOMPRESSED stream
             if(header == -100) {
                 createDictionary = true;
-                System.out.println("#control-msg:" + header);
+                System.out.println("#control-msg:" + header + " >>>>>>>>>>>>");
             }
             else if (header < -98 ) {
-                System.out.println("#control-msg:" + header);
+                System.out.println("#control-msg:" + header + " >>>>>>>>>>>>");
                 return;
             }
 
-
             if(header == -1) { //if -1 it's uncompressed
                 cfb.add(payload);
+                System.out.println("#UNCOMP" +  uncompressedCnt + " onPublish:" + msg.getPayload().array().length + "bytes onTopic:" + msg.getTopicName());
+                ++uncompressedCnt;
             }
             else if(header > 0) { //if positive, it represents a new dictionary ID dictionaryId
 //                FemtoZipCompressionModel femtoZipCompressionModel = this.dictionaries.get(header);
 //                byte[] decompressed = femtoZipCompressionModel.decompress(payload);
 //                cfb.add(decompressed);
+                System.out.println("#COMP" + compressedCnt + " onPublish:" + msg.getPayload().array().length + "bytes onTopic:" + msg.getTopicName());
+                ++compressedCnt;
             }
 
             if(createDictionary) { //every 100 messages we resample
+                System.out.println("Creating dictionary .................");
                 byte[] dictionary = new byte[0];
                 try {
                     FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
@@ -129,9 +132,10 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     byte[] dictMesage = new byte[dictionary.length +1];
                     dictMesage[0] = dictionaryId;
                     dictionaryId = (byte)((dictionaryId+1) % 127); //calculate the next dictId
-                    for(int i = 0; i < dictionary.length; i++){ //copy dictionary content to dictMessage
-                        dictMesage[i+1] = dictionary[i];
-                    }
+//                    for(int i = 0; i < dictionary.length; i++){ //copy dictionary content to dictMessage
+//                        dictMesage[i+1] = dictionary[i];
+//                    }
+                    System.arraycopy(dictionary, 0, dictMesage, 1, dictionary.length);
 
                     //TODO why do we need this code block of sending a byte with -103
                     byte[] cmdb = new byte[1];
@@ -148,7 +152,9 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     pm.setPayload(ByteBuffer.wrap(dictMesage));
                     pm.setQos(AbstractMessage.QOSType.LEAST_ONE);
                     this.mqttBroker.internalPublish(pm);
-                    System.out.println("finished sampling dictionary");
+
+                    System.out.println("################ Finished sampling dictionary ##################");
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -160,7 +166,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
 
     @Override
     public void onSubscribe(InterceptSubscribeMessage msg) {
-        System.out.println("#onsubscribe: " + msg.getTopicFilter() + " #clientID:" + new String(msg.getClientID()));
+        System.out.println("broker: #onsubscribe: " + msg.getTopicFilter() + " #clientID:" + new String(msg.getClientID()));
     }
 
     public void onUnsubscribe(InterceptUnsubscribeMessage msg) {

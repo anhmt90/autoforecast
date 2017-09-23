@@ -15,8 +15,6 @@ public class Publisher {
 
     public static void main(String[] args) throws Exception {
         System.out.println("<<<<<<<<<<<<<<<<<<<< Starting Publisher >>>>>>>>>>>>>>>>>>>>");
-
-//        LineIterator it = FileUtils.lineIterator(new File("D:\\Projects\\datasets\\debs2015\\debs2015.xml"), "UTF-8");
         LineIterator it = FileUtils.lineIterator(new File("/mnt/A43003F9E520D223/Workplace/_data/meetup.json"), "UTF-8");
 
 
@@ -27,7 +25,6 @@ public class Publisher {
         PublisherHandler publisherHandler = new PublisherHandler(cl, it);
         cl.setCallback(publisherHandler);
         cl.connect();
-
         publisherHandler.subscribeDict();
 
         Thread th = new Thread(publisherHandler);

@@ -16,7 +16,7 @@ import static java.util.Arrays.asList;
  */
 
 
-public class SamplingBroker implements Runnable{
+public class SamplingBroker {
     public static void main(String[] args) throws IOException, InterruptedException {
         System.out.println("<<<<<<<<<<<<<<<<<<<< Starting SB >>>>>>>>>>>>>>>>>>>>");
 
@@ -54,14 +54,14 @@ public class SamplingBroker implements Runnable{
         System.out.println("Quit");
     }
 
-    @Override
-    public void run() {
-        try {
-            this.main(new String[] {});
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+//    @Override
+//    public void run() {
+//        try {
+//            this.main(new String[] {});
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

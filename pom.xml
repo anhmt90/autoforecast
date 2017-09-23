@@ -11,6 +11,7 @@
 
     <modules>
         <module>publisher</module>
+        <module>subscriber</module>
     </modules>
 
     <properties>
@@ -173,13 +174,13 @@
                             <!--<goal>java</goal>-->
                         <!--</goals>-->
                         <!--<configuration>-->
-                            <!--<mainClass>subscriber.Subscriber</mainClass>-->
+                            <!--<mainClass>Subscriber</mainClass>-->
                         <!--</configuration>-->
                     <!--</execution>-->
                 </executions>
                 <configuration>
                     <!--<mainClass>samplingBroker.SamplingBroker</mainClass>-->
-                    <mainClass>Driver</mainClass>
+                    <mainClass>samplingBroker.SamplingBroker</mainClass>
                     <!--<cleanupDaemonThreads>false</cleanupDaemonThreads>-->
                     <!--<executable>java</executable>-->
                     <!--<arguments>-->
