@@ -14,6 +14,7 @@ import java.io.File;
 public class Publisher {
 
     public static void main(String[] args) throws Exception {
+        System.out.println("<<<<<<<<<<<<<<<<<<<< Starting Publisher >>>>>>>>>>>>>>>>>>>>");
 
 //        LineIterator it = FileUtils.lineIterator(new File("D:\\Projects\\datasets\\debs2015\\debs2015.xml"), "UTF-8");
         LineIterator it = FileUtils.lineIterator(new File("/home/chris/datasets/sdcdata/debs2015/debs2015.xml"), "UTF-8");

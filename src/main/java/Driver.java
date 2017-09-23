@@ -5,10 +5,11 @@ import subscriber.Subscriber;
 public class Driver {
     public static void main(String[] args) throws Exception {
         System.out.println("<<<<<<<<<<<<<<<<<<<< Starting Driver >>>>>>>>>>>>>>>>>>>>");
-        Thread th = new Thread();
-        th.start();
-        SamplingBroker.main(new String[] {});
-        Subscriber.main(new String[] {});
-        Publisher.main(new String[] {});
+        Thread bThread = new Thread(new SamplingBroker());
+        bThread.start();
+        Thread.sleep(1000);
+
+        Thread sThread = new Thread(new Subscriber());
+        sThread.start();
     }
 }

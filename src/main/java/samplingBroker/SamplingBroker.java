@@ -16,8 +16,9 @@ import static java.util.Arrays.asList;
  */
 
 
-public class SamplingBroker {
+public class SamplingBroker implements Runnable{
     public static void main(String[] args) throws IOException, InterruptedException {
+        System.out.println("<<<<<<<<<<<<<<<<<<<< Starting SB >>>>>>>>>>>>>>>>>>>>");
 
         Properties m_properties = new Properties();
         m_properties.put(BrokerConstants.PORT_PROPERTY_NAME, Integer.toString(BrokerConstants.PORT));
@@ -53,4 +54,14 @@ public class SamplingBroker {
         System.out.println("Quit");
     }
 
+    @Override
+    public void run() {
+        try {
+            this.main(new String[] {});
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }

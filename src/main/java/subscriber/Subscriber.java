@@ -6,8 +6,9 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 /**
  * Created by chris on 19.02.16.
  */
-public class Subscriber {
+public class Subscriber implements Runnable{
     public static void main(String[] args) throws MqttException, InterruptedException {
+        System.out.println("<<<<<<<<<<<<<<<<<<<< Starting Subscriber >>>>>>>>>>>>>>>>>>>>");
 
         MqttClient cl = new MqttClient("tcp://localhost:1883", "Subscriber", new MemoryPersistence());
 
@@ -33,5 +34,16 @@ public class Subscriber {
         Thread.sleep(Long.MAX_VALUE);
 
         System.out.println("Quit");
+    }
+
+    @Override
+    public void run() {
+        try {
+            this.main(new String[] {});
+        } catch (MqttException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
