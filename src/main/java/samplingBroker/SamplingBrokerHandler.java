@@ -4,9 +4,12 @@ import io.moquette.interception.AbstractInterceptHandler;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import io.moquette.interception.messages.InterceptSubscribeMessage;
 import io.moquette.interception.messages.InterceptUnsubscribeMessage;
-import io.moquette.proto.messages.AbstractMessage;
-import io.moquette.proto.messages.PublishMessage;
+//import io.moquette.proto.messages.AbstractMessage;
+//import io.moquette.proto.messages.PublishMessage;
+import io.moquette.parser.proto.messages.PublishMessage;
+import io.moquette.parser.proto.messages.AbstractMessage;
 import io.moquette.server.Server;
+//import io.netty.handler.codec.mqtt.*;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.toubassi.femtozip.ArrayDocumentList;
 import org.toubassi.femtozip.models.FemtoZipCompressionModel;
@@ -137,14 +140,25 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
 //                    }
                     System.arraycopy(dictionary, 0, dictMesage, 1, dictionary.length);
 
+
+//                    MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false,
+//                            MqttQoS.AT_LEAST_ONCE, false, 0);
+//                    MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader("Const.DICT_TOPIC_NAME",000)
                     //TODO why do we need this code block of sending a byte with -103
-                    byte[] cmdb = new byte[1];
-                    cmdb[0] = -103;
-                    PublishMessage cmd = new PublishMessage();
-                    cmd.setTopicName(Const.DICT_TOPIC_NAME);
-                    cmd.setPayload(ByteBuffer.wrap(cmdb));
-                    cmd.setQos(AbstractMessage.QOSType.LEAST_ONE);
-                    this.mqttBroker.internalPublish(cmd);
+//                    byte[] cmdb = new byte[1];
+//                    cmdb[0] = -103;
+//                    PublishMessage cmd = new PublishMessage();
+//                    cmd.setTopicName(Const.DICT_TOPIC_NAME);
+//                    cmd.setPayload(ByteBuffer.wrap(cmdb));
+//                    cmd.setQos(AbstractMessage.QOSType.LEAST_ONE);
+//                    this.mqttBroker.internalPublish(cmd);
+//                    this.mqttBroker.internalPublish(cmd);
+//                    this.mqttBroker.internalPublish(cmd);
+//                    this.mqttBroker.internalPublish(cmd);
+//                    this.mqttBroker.internalPublish(cmd);
+//                    this.mqttBroker.internalPublish(cmd);
+//                    this.mqttBroker.internalPublish(cmd);
+
 
                     //Publish the new dictionry to clients
                     PublishMessage pm = new PublishMessage();

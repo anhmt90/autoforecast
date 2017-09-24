@@ -52,17 +52,17 @@ public class SubscriberHandler implements MqttCallback, Runnable{
             System.out.println("#got-dictionary: " + payload.length + " bytes");
             FemtoZipCompressionModel femtoZipCompressionModel1 = FemtoFactory.fromDictionary(payload);
             dictionaries.put(header, femtoZipCompressionModel1);
-//            System.out.println("Sub: dictionary received");
+            System.out.println("Sub: dictionary received");
         }
         if(s.equalsIgnoreCase(Const.TOPIC_NAME)) {
             if(header == -1) {
-                System.out.println("Sub: #UNCOMP" + uncompressedCnt + ": " + payload.length + " bytes");
+                System.out.println("Sub: #UNCOMP" + uncompressedCnt + ": " + (payload.length+1) + " bytes");
                 uncompressedCnt++;
             }
             else if (header > 0) {
                 FemtoZipCompressionModel femtoZipCompressionModel = dictionaries.get(header);
                 byte[] uncompressedMessage = femtoZipCompressionModel.decompress(payload);
-                System.out.println("Sub: #COMP" + compressedCnt+ ": " + payload.length + " bytes");
+                System.out.println("Sub: #COMP" + compressedCnt+ ": " + (payload.length+1) + " bytes");
                 compressedCnt++;
             }
         }
