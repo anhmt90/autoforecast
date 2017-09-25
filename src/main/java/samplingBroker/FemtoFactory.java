@@ -25,7 +25,6 @@ public class FemtoFactory {
         @return: a dictionary as byte array
     */
     public static byte[] getDictionary(FemtoZipCompressionModel compressionModel) throws IOException {
-
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
         compressionModel.save(dos);

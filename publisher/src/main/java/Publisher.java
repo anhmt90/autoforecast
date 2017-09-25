@@ -20,7 +20,7 @@ public class Publisher {
 
         //MqttClientPersistence s_dataStore;
 //        MqttClient cl = new MqttClient("tcp://131.159.52.29:1883", "Publisher", new MemoryPersistence());
-        MqttClient cl = new MqttClient("tcp://127.0.0.1:1883", "Publisher", new MemoryPersistence());
+        MqttClient cl = new MqttClient("tcp://127.0.0.1:1883", "publisher1", new MemoryPersistence());
 
         PublisherHandler publisherHandler = new PublisherHandler(cl, it);
         cl.setCallback(publisherHandler);

@@ -10,39 +10,51 @@ import io.moquette.parser.proto.messages.PublishMessage;
 import io.moquette.parser.proto.messages.AbstractMessage;
 import io.moquette.server.Server;
 //import io.netty.handler.codec.mqtt.*;
+import io.moquette.spi.impl.subscriptions.Subscription;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.jetbrains.annotations.Nullable;
 import org.toubassi.femtozip.ArrayDocumentList;
 import org.toubassi.femtozip.models.FemtoZipCompressionModel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.*;
+
+import static org.apache.commons.lang3.math.NumberUtils.max;
 
 /**
  * Created by chris on 19.02.16.
  */
 public class SamplingBrokerHandler extends AbstractInterceptHandler {
 
+    private class SampleMessage{
+        long timestamp;
+        byte[] payload;
+        SampleMessage(long timestamp, byte[] payload){
+            this.timestamp = timestamp;
+            this.payload = payload;
+        }
+    }
+
     private final Server mqttBroker;
-    private final CircularFifoQueue<byte[]> cfb;
+    private final CircularFifoQueue<SampleMessage> samplingQueue;  //used to sample content for shared dict
+//    private long startTimestampOfSamplingQueue;
+//    private long endTimestampOfSamplingQueue;
     private final Dictionary<Byte, FemtoZipCompressionModel> dictionaries;
     private long uncompressedCnt;
     private long compressedCnt;
     private byte dictionaryId;
-    private boolean createDictionary;
+    private boolean createNewDictionary;
 
     public SamplingBrokerHandler(Server mqttBroker) {
 
         this.mqttBroker = mqttBroker;
-        this.cfb = new CircularFifoQueue<>(500);
+        this.samplingQueue = new CircularFifoQueue<>(120);
         dictionaries = new Hashtable<>();
         uncompressedCnt = 1;
         compressedCnt = 1;
-        dictionaryId = 1;
-        createDictionary = false;
+        dictionaryId = 0;
+        createNewDictionary = false;
     }
 
     private int calcDictionarySize() {
@@ -54,136 +66,165 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
         if(msg.getTopicName().equalsIgnoreCase(Const.TOPIC_NAME)) {
             byte[] notification = msg.getPayload().array();
             byte header = notification[0];
-
             byte[] payload = Arrays.copyOfRange(notification, 1, notification.length);
 
-            //-100: code to indicate ending of UNCOMPRESSED stream
-            if(header == -100) {
-                createDictionary = true;
-                System.out.println("#control-msg:" + header + " >>>>>>>>>>>>");
-            }
-            else if (header < -98 ) {
-                System.out.println("#control-msg:" + header + " >>>>>>>>>>>>");
-                return;
-            }
 
-            if(header == -1) { //if -1 it's uncompressed
-                cfb.add(payload);
-                System.out.println("#UNCOMP" +  uncompressedCnt + " onPublish:" + msg.getPayload().array().length + "bytes onTopic:" + msg.getTopicName());
+            if(header == -1) { //-1: uncompressed messages
+                samplingQueue.add(new SampleMessage(System.currentTimeMillis()/1000, payload));
+                System.out.println("#" +  uncompressedCnt + " UNCOMP - FORW:" + msg.getPayload().array().length + "bytes - TOPIC:" + msg.getTopicName());
                 ++uncompressedCnt;
             }
-            else if(header > 0) { //if positive, it represents a new dictionary ID dictionaryId
-//                FemtoZipCompressionModel femtoZipCompressionModel = this.dictionaries.get(header);
-//                byte[] decompressed = femtoZipCompressionModel.decompress(payload);
-//                cfb.add(decompressed);
-                System.out.println("#COMP" + compressedCnt + " onPublish:" + msg.getPayload().array().length + "bytes onTopic:" + msg.getTopicName());
+            else if(header >= 0) { //if positive, it represents a new dictionary ID dictionaryId
+                System.out.println("#" +  compressedCnt + " COMP - FORW:" + msg.getPayload().array().length + "bytes - TOPIC:" + msg.getTopicName());
                 ++compressedCnt;
             }
 
-            if(createDictionary) { //every 100 messages we resample
-                System.out.println("Creating dictionary .................");
-                byte[] dictionary = new byte[0];
-                try {
-                    FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
+            byte[] dictionary = new byte[0];
+            if((uncompressedCnt == samplingQueue.maxSize() && !FemtoFactory.isCachedDictionaryAvailable())){
+                //TODO add more if condition when FemtoFactory.isCachedDictionaryAvailable() = true and predict msg rate
+                System.out.println("#Creating a new dictionary .................");
+                FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
+                try{
+                    System.out.println("#Building a new dictionary based on the last " + uncompressedCnt + " uncompressed messages");
+                    //Build the new dictionary
+                    femtoZipCompressionModel.setMaxDictionaryLength(calcDictionarySize()); //Todo make it better
+                    femtoZipCompressionModel.build(new ArrayDocumentList(getAllPayloadOfSamplingQueue()));
+                    System.out.println("#Dictionary built");
 
-                    if (!FemtoFactory.isCachedDictionaryAvailable()) {
-                        System.out.println("#sampling-a-dictionary");
+                    //Caching the sampled dictionary
+                    FemtoFactory.toCache(femtoZipCompressionModel);
 
-                        ArrayList<byte[]> temp = new ArrayList<>(cfb.size());
-
-                        for(int i = 0; i < cfb.size(); i++) {
-                            temp.add(cfb.get(i));
-                        }
-
-                        //Build the dictionary
-                        femtoZipCompressionModel.setMaxDictionaryLength(calcDictionarySize()); //Todo make it better
-                        femtoZipCompressionModel.build(new ArrayDocumentList(temp));
-
-                        System.out.println("#sampling-complete");
-
-                        //Caching the sampled dictionary
-                        System.out.println("Caching dictionary");
-                        FemtoFactory.toCache(femtoZipCompressionModel);
-
-                        //get the sampled dict
-                        dictionary = FemtoFactory.getDictionary(femtoZipCompressionModel);
-
-                    } else {
-                        System.out.println("Loading dictionary from cache");
-//                        femtoZipCompressionModel = FemtoFactory.fromCache();
-                        dictionary = FemtoFactory.fromCache();
-                    }
-
-
-
-//                    old one
-//                    System.out.println("#sampling-a-dictionary");
-//                    ArrayList<byte[]> temp = new ArrayList<>(cfb.size());
-//                    for(int i = 0; i < cfb.size(); i++) {
-//                        temp.add(cfb.get(i));
-//                    }
-//
-//                    //Build the dictionary
-//                    FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
-//                    femtoZipCompressionModel.setMaxDictionaryLength(calcDictionarySize());
-//                    femtoZipCompressionModel.build(new ArrayDocumentList(temp));
-
-//                    this.dictionaries.put(dictionaryId, femtoZipCompressionModel);
-//                    byte[] dictionary = FemtoFactory.getDictionary(femtoZipCompressionModel);
-
-                    //publish the dictionary
-                    byte[] dictMesage = new byte[dictionary.length +1];
-                    dictMesage[0] = dictionaryId;
-                    dictionaryId = (byte)((dictionaryId+1) % 127); //calculate the next dictId
-//                    for(int i = 0; i < dictionary.length; i++){ //copy dictionary content to dictMessage
-//                        dictMesage[i+1] = dictionary[i];
-//                    }
-                    System.arraycopy(dictionary, 0, dictMesage, 1, dictionary.length);
-
-
-//                    MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false,
-//                            MqttQoS.AT_LEAST_ONCE, false, 0);
-//                    MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader("Const.DICT_TOPIC_NAME",000)
-                    //TODO why do we need this code block of sending a byte with -103
-//                    byte[] cmdb = new byte[1];
-//                    cmdb[0] = -103;
-//                    PublishMessage cmd = new PublishMessage();
-//                    cmd.setTopicName(Const.DICT_TOPIC_NAME);
-//                    cmd.setPayload(ByteBuffer.wrap(cmdb));
-//                    cmd.setQos(AbstractMessage.QOSType.LEAST_ONE);
-//                    this.mqttBroker.internalPublish(cmd);
-//                    this.mqttBroker.internalPublish(cmd);
-//                    this.mqttBroker.internalPublish(cmd);
-//                    this.mqttBroker.internalPublish(cmd);
-//                    this.mqttBroker.internalPublish(cmd);
-//                    this.mqttBroker.internalPublish(cmd);
-//                    this.mqttBroker.internalPublish(cmd);
-
-
-                    //Publish the new dictionry to clients
-                    PublishMessage pm = new PublishMessage();
-                    pm.setTopicName(Const.DICT_TOPIC_NAME);
-                    pm.setPayload(ByteBuffer.wrap(dictMesage));
-                    pm.setQos(AbstractMessage.QOSType.LEAST_ONE);
-                    this.mqttBroker.internalPublish(pm);
-
-                    System.out.println("################ Finished sampling dictionary ##################");
-
+                    //get the sampled dict
+                    dictionary = FemtoFactory.getDictionary(femtoZipCompressionModel);
+                    publishNewDictionary(Const.DICT_TOPIC_NAME, dictionary);
+                    System.out.println("#Dictionary published");
+                    uncompressedCnt = 1; //reset unCommpressCnt
+                    requireNewDictionary();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                createDictionary = false;
             }
+//            else if (FemtoFactory.isCachedDictionaryAvailable()){
+//            }
+
 
         }
     }
 
     @Override
     public void onSubscribe(InterceptSubscribeMessage msg) {
-        System.out.println("broker: #onsubscribe: " + msg.getTopicFilter() + " #clientID:" + new String(msg.getClientID()));
+        System.out.println("broker: #onsubscribe: " + msg.getTopicFilter() + " #clientID:" + msg.getClientID());
+        if(FemtoFactory.isCachedDictionaryAvailable() && msg.getClientID().equalsIgnoreCase(msg.getTopicFilter())){
+            try {
+                publishCachedDictionary(msg.getClientID(), FemtoFactory.fromCache());
+            } catch (IOException e) {
+            }
+        }
     }
 
     public void onUnsubscribe(InterceptUnsubscribeMessage msg) {
-        System.out.println("TODO");
+        System.out.println("#"+msg.getClientID()+" UNSUB - TOPIC" + msg.getTopicFilter());
     }
+
+    /*Publish the cached dictionary when new clients subscribe*/
+    private void publishCachedDictionary(String topic, byte[] dictionary) {
+        byte[] sharedDict = new byte[dictionary.length +1];
+        sharedDict[0] = dictionaryId;
+        System.arraycopy(dictionary, 0, sharedDict, 1, dictionary.length);
+
+        PublishMessage pm = new PublishMessage();
+        pm.setTopicName(topic);
+        pm.setPayload(ByteBuffer.wrap(sharedDict));
+        pm.setQos(AbstractMessage.QOSType.LEAST_ONE);
+
+        this.mqttBroker.internalPublish(pm);
+    }
+
+    /*Publish a new dictionary by sampling*/
+    private void publishNewDictionary(String topic, byte[] dictionary) {
+        byte[] sharedDict = new byte[dictionary.length +1];
+        dictionaryId = (byte) ((dictionaryId + 1) % 127); //calculate the next dictId
+        sharedDict[0] = dictionaryId;
+        System.arraycopy(dictionary, 0, sharedDict, 1, dictionary.length);
+
+        PublishMessage pm = new PublishMessage();
+        pm.setTopicName(Const.DICT_TOPIC_NAME);
+        pm.setPayload(ByteBuffer.wrap(sharedDict));
+        pm.setQos(AbstractMessage.QOSType.LEAST_ONE);
+
+        this.mqttBroker.internalPublish(pm);
+    }
+
+
+
+
+
+    private boolean requireNewDictionary() throws IOException {
+        ArrayList<byte[]> N = getAllPayloadOfSamplingQueue();
+
+        int splitPos = (int)(samplingQueue.size()*0.7);
+        ArrayList<byte[]> N_train = new ArrayList<>(N.subList(0,splitPos));
+        ArrayList<byte[]> N_test = new ArrayList<>(N.subList(splitPos+1, N.size()-1));
+
+        FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
+        femtoZipCompressionModel.build(new ArrayDocumentList(N_train));
+
+        int TB_test = 0;
+        for(byte[] testPayload : N_test)
+            TB_test += testPayload.length;
+
+        int CTB_test = 0;
+        for(byte[] testPayload : N_test)
+            CTB_test += femtoZipCompressionModel.compress(testPayload).length;
+
+
+        long bandwidthReduction = 1 - (CTB_test/TB_test);
+
+        long totalSize = 0;
+        for(byte[] testPayload : N){
+            totalSize = totalSize + testPayload.length;
+        }
+        System.out.println("Average message size = " + (totalSize/N.size()) );
+        long messageRate = totalSize/getTimeSpanOfSamplingQueue();
+        System.out.println("Message rate = " + messageRate );
+
+        long T_amortize = femtoZipCompressionModel.getDictionary().length/(bandwidthReduction * messageRate);
+        System.out.println("|SD| = " + femtoZipCompressionModel.getDictionary().length);
+        System.out.println("#CONSTANT_RATE: Dictionary expires in " + (T_amortize * 10) + " seconds");
+
+        return false;
+    }
+
+
+
+
+
+
+    private long getTimeSpanOfSamplingQueue(){
+        if(samplingQueue.isEmpty() || samplingQueue.size() == 1){
+            return 0;
+        }
+        return (samplingQueue.get(samplingQueue.size()-1).timestamp - samplingQueue.get(0).timestamp);
+    }
+
+    @Nullable
+    private ArrayList<Long> getAllTimeStampOfSamplingQueue(){
+        if(samplingQueue.isEmpty())return null;
+        ArrayList<Long> timestampList = new ArrayList<>(samplingQueue.size());
+        for (SampleMessage sm : samplingQueue){
+            timestampList.add(sm.timestamp);
+        }
+        return timestampList;
+    }
+
+    @Nullable
+    private ArrayList<byte[]> getAllPayloadOfSamplingQueue(){
+        if(samplingQueue.isEmpty()) return null;
+        ArrayList<byte[]> payloadList = new ArrayList<>(samplingQueue.size());
+        for (SampleMessage sm : samplingQueue){
+            payloadList.add(sm.payload);
+        }
+        return payloadList;
+    }
+
 }

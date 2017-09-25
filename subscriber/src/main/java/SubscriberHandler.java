@@ -26,6 +26,7 @@ public class SubscriberHandler implements MqttCallback, Runnable{
     public void startSubscribing() throws MqttException {
         this.cl.subscribe(Const.DICT_TOPIC_NAME);
         this.cl.subscribe(Const.TOPIC_NAME);
+        this.cl.subscribe(this.cl.getClientId());
     }
 
     @Override
@@ -40,29 +41,35 @@ public class SubscriberHandler implements MqttCallback, Runnable{
     }
 
     @Override
-    public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
         byte[] msgPayload = mqttMessage.getPayload();
         byte header = msgPayload[0];
         byte[] payload = Arrays.copyOfRange(msgPayload, 1, msgPayload.length);
-        if(header == -103){
-            System.out.println("Sub: cmdb received");
-        }
-
-        if(s.equalsIgnoreCase(Const.DICT_TOPIC_NAME)) {
-            System.out.println("#got-dictionary: " + payload.length + " bytes");
+//        if(header == -103){
+//            System.out.println("Sub: cmdb received");
+//        }
+        if(topic.equalsIgnoreCase(Const.DICT_TOPIC_NAME)) {
+            System.out.println("#got-new-dictionary: " + payload.length + " bytes");
             FemtoZipCompressionModel femtoZipCompressionModel1 = FemtoFactory.fromDictionary(payload);
             dictionaries.put(header, femtoZipCompressionModel1);
-            System.out.println("Sub: dictionary received");
+            System.out.println("Sub: new dictionary received");
         }
-        if(s.equalsIgnoreCase(Const.TOPIC_NAME)) {
+        else if(topic.equalsIgnoreCase(this.cl.getClientId())) {
+            System.out.println("#got-cached-dictionary: " + payload.length + " bytes");
+            FemtoZipCompressionModel femtoZipCompressionModel1 = FemtoFactory.fromDictionary(payload);
+            dictionaries.put(header, femtoZipCompressionModel1);
+            System.out.println("Sub: cached dictionary received");
+//            this.cl.unsubscribe(this.cl.getClientId());
+        }
+        else if(topic.equalsIgnoreCase(Const.TOPIC_NAME)) {
             if(header == -1) {
                 System.out.println("Sub: #UNCOMP" + uncompressedCnt + ": " + (payload.length+1) + " bytes");
                 uncompressedCnt++;
             }
-            else if (header > 0) {
+            else if (header >= 0) {
                 FemtoZipCompressionModel femtoZipCompressionModel = dictionaries.get(header);
-                byte[] uncompressedMessage = femtoZipCompressionModel.decompress(payload);
-                System.out.println("Sub: #COMP" + compressedCnt+ ": " + (payload.length+1) + " bytes");
+                byte[] decompressedMessage = femtoZipCompressionModel.decompress(payload);
+                System.out.println("Sub: #" + compressedCnt+ " COMP: " + (payload.length+1) + " bytes - DECOMP: " + decompressedMessage.length + "bytes");
                 compressedCnt++;
             }
         }

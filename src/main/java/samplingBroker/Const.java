@@ -6,4 +6,6 @@ package samplingBroker;
 public final class Const {
     public static String TOPIC_NAME = "debs2015";
     public static String DICT_TOPIC_NAME = "debs2015_dc";
+    public static String NEW_DICT = "new-dict";
+
 }
