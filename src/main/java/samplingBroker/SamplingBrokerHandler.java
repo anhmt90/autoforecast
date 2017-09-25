@@ -75,7 +75,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                 ++uncompressedCnt;
             }
             else if(header >= 0) { //if positive, it represents a new dictionary ID dictionaryId
-                System.out.println("#" +  compressedCnt + " COMP - FORW:" + msg.getPayload().array().length + "bytes - TOPIC:" + msg.getTopicName());
+                System.out.println("#" +  compressedCnt + " COMP - FORW:" + msg.getPayload().array().length + " bytes - TOPIC:" + msg.getTopicName());
                 ++compressedCnt;
             }
 
@@ -164,7 +164,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
 
         int splitPos = (int)(samplingQueue.size()*0.7);
         ArrayList<byte[]> N_train = new ArrayList<>(N.subList(0,splitPos));
-        ArrayList<byte[]> N_test = new ArrayList<>(N.subList(splitPos+1, N.size()-1));
+        ArrayList<byte[]> N_test = new ArrayList<>(N.subList(splitPos+1, N.size()));
 
         FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
         femtoZipCompressionModel.build(new ArrayDocumentList(N_train));
