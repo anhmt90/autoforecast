@@ -13,6 +13,10 @@ import io.moquette.server.Server;
 import io.moquette.spi.impl.subscriptions.Subscription;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.jetbrains.annotations.Nullable;
+import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.Rserve.RConnection;
+import org.rosuda.REngine.Rserve.RserveException;
 import org.toubassi.femtozip.ArrayDocumentList;
 import org.toubassi.femtozip.models.FemtoZipCompressionModel;
 
@@ -37,8 +41,10 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
     }
 
     private final Server mqttBroker;
+    private final CircularFifoQueue<SampleMessage> samplingQueueRealTime;  //used to sample content for shared dict
     private final CircularFifoQueue<SampleMessage> samplingQueue;  //used to sample content for shared dict
-//    private long startTimestampOfSamplingQueue;
+
+    //    private long startTimestampOfSamplingQueue;
 //    private long endTimestampOfSamplingQueue;
     private final Dictionary<Byte, FemtoZipCompressionModel> dictionaries;
     private long uncompressedCnt;
@@ -49,36 +55,41 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
     public SamplingBrokerHandler(Server mqttBroker) {
 
         this.mqttBroker = mqttBroker;
-        this.samplingQueue = new CircularFifoQueue<>(120);
+        this.samplingQueueRealTime = new CircularFifoQueue<>(100);
+        this.samplingQueue = new CircularFifoQueue<>(1000);
         dictionaries = new Hashtable<>();
-        uncompressedCnt = 1;
-        compressedCnt = 1;
+        uncompressedCnt = 0;
+        compressedCnt = 0;
         dictionaryId = 0;
         createNewDictionary = false;
     }
 
-    private int calcDictionarySize() {
-        return 190; //todo make better
-    }
+//    private int calcDictionarySize() {
+//        return 190; //todo make better
+//    }
 
     @Override
     public void onPublish(InterceptPublishMessage msg) {
         if(msg.getTopicName().equalsIgnoreCase(Const.TOPIC_NAME)) {
-            byte[] notification = msg.getPayload().array();
-            byte header = notification[0];
-            byte[] payload = Arrays.copyOfRange(notification, 1, notification.length);
-
+            byte[] received = msg.getPayload().array();
+            byte header = received[0];
+            int timestamp = msg.getPayload().getInt(1);
+            byte[] payload = new byte[received.length-5];
+            System.arraycopy(received, 5, payload, 0, received.length-5);
 
             if(header == -1) { //-1: uncompressed messages
-                samplingQueue.add(new SampleMessage(System.currentTimeMillis()/1000, payload));
-                System.out.println("#" +  uncompressedCnt + " UNCOMP - FORW:" + msg.getPayload().array().length + "bytes - TOPIC:" + msg.getTopicName());
+                samplingQueue.add(new SampleMessage(timestamp, payload));
                 ++uncompressedCnt;
+                System.out.println("#" +  uncompressedCnt + " UNCOMP - FORW:" + msg.getPayload().array().length + "bytes - TOPIC:" + msg.getTopicName());
+                System.out.println(timestamp+":: " + (new String(payload)) + "\n");
             }
             else if(header >= 0) { //if positive, it represents a new dictionary ID dictionaryId
-                System.out.println("#" +  compressedCnt + " COMP - FORW:" + msg.getPayload().array().length + " bytes - TOPIC:" + msg.getTopicName());
                 ++compressedCnt;
-            }
+                System.out.println("#" +  compressedCnt + " COMP - FORW:" + msg.getPayload().array().length + " bytes - TOPIC:" + msg.getTopicName());
 
+            }
+//            System.out.println(timestamp);
+//            System.out.println(new String(payload));
             byte[] dictionary = new byte[0];
             if((uncompressedCnt == samplingQueue.maxSize() && !FemtoFactory.isCachedDictionaryAvailable())){
                 //TODO add more if condition when FemtoFactory.isCachedDictionaryAvailable() = true and predict msg rate
@@ -87,8 +98,8 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                 try{
                     System.out.println("#Building a new dictionary based on the last " + uncompressedCnt + " uncompressed messages");
                     //Build the new dictionary
-                    femtoZipCompressionModel.setMaxDictionaryLength(calcDictionarySize()); //Todo make it better
-                    femtoZipCompressionModel.build(new ArrayDocumentList(getAllPayloadOfSamplingQueue()));
+                    femtoZipCompressionModel.setMaxDictionaryLength(2000000); //Todo make it better
+                    femtoZipCompressionModel.build(new ArrayDocumentList(getAllPayloadOfSamplingQueue(samplingQueue)));
                     System.out.println("#Dictionary built");
 
                     //Caching the sampled dictionary
@@ -99,13 +110,17 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     publishNewDictionary(Const.DICT_TOPIC_NAME, dictionary);
                     System.out.println("#Dictionary published");
                     uncompressedCnt = 1; //reset unCommpressCnt
-                    requireNewDictionary();
+                    calcExpiry1(samplingQueue);
+                    calcExpiry2();
+                    Thread.sleep(600000);
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-//            else if (FemtoFactory.isCachedDictionaryAvailable()){
-//            }
+            else if (FemtoFactory.isCachedDictionaryAvailable()){
+            }
 
 
         }
@@ -159,10 +174,10 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
 
 
 
-    private boolean requireNewDictionary() throws IOException {
-        ArrayList<byte[]> N = getAllPayloadOfSamplingQueue();
+    private void calcExpiry1(CircularFifoQueue<SampleMessage> cfq) throws IOException {
+        ArrayList<byte[]> N = getAllPayloadOfSamplingQueue(cfq);
 
-        int splitPos = (int)(samplingQueue.size()*0.7);
+        int splitPos = (int)(cfq.size()*0.7);
         ArrayList<byte[]> N_train = new ArrayList<>(N.subList(0,splitPos));
         ArrayList<byte[]> N_test = new ArrayList<>(N.subList(splitPos+1, N.size()));
 
@@ -185,43 +200,84 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
             totalSize = totalSize + testPayload.length;
         }
         System.out.println("Average message size = " + (totalSize/N.size()) );
-        long messageRate = totalSize/getTimeSpanOfSamplingQueue();
+        long messageRate = totalSize/getTimeSpanOfSamplingQueue(cfq);
         System.out.println("Message rate = " + messageRate );
 
         long T_amortize = femtoZipCompressionModel.getDictionary().length/(bandwidthReduction * messageRate);
         System.out.println("|SD| = " + femtoZipCompressionModel.getDictionary().length);
-        System.out.println("#CONSTANT_RATE: Dictionary expires in " + (T_amortize * 10) + " seconds");
-
-        return false;
+        System.out.println(">>>>>>>>>>>>>>>>>> FORMULA: Dictionary expires in " + (T_amortize * 10) + " seconds");
     }
 
+    private void calcExpiry2(){
+        String forecastScript = System.getProperty("user.dir")+"/src/main/resources/forecastExpiry.R"; ;
+        RConnection connection = null;
+        try {
+             /* Create a connection to Rserve instance running
+              * on default port 6311
+              */
+            connection = new RConnection();
 
+            connection.eval(String.format("source('%s')", forecastScript));
+            REXP res = connection.eval("result$mean");
 
+            int pointForecast[] = res.asIntegers();
+            int sum = 0;
+            int expiredMin = 0;
+            int expiryAssumption = 10000; //messages
+            System.out.println("Point forecasts: ");
+            for (int i = 0; i < pointForecast.length; i++) {
+                System.out.println(pointForecast[i]);
+            }
 
+            for (int i = 0; i < pointForecast.length - 1; i++) {
+                if((sum + pointForecast[i]) < expiryAssumption){
+                    sum += pointForecast[i];
+                    expiredMin += 60;
+                } else {
+                    expiredMin += (expiryAssumption - sum)*60/pointForecast[i];
+                    break;
+                }
+            }
+            System.out.println(">>>>>>>>>>>>>>>>>> FORECAST: Dictionary expires in " + expiredMin + " minutes");
 
+        } catch (REXPMismatchException e) {
+            e.printStackTrace();
+        } catch (RserveException e) {
+            e.printStackTrace();
+        }
+    }
 
-    private long getTimeSpanOfSamplingQueue(){
-        if(samplingQueue.isEmpty() || samplingQueue.size() == 1){
+//    [1] 4706.890 5120.359 5391.677 4776.739 5814.571 6182.879 5971.597 6065.735 6188.243 6270.939 6025.006 6602.652
+//    [13] 6232.642 5861.955 5319.898 5402.277 5074.053 4898.352 4541.940 4237.183 4251.528 4403.138 4230.262 4598.959
+//    [25] 4706.890 5120.359 5391.677 4776.739 5814.571 6182.879 5971.597 6065.735 6188.243 6270.939 6025.006 6602.652
+//    [37] 6232.642 5861.955 5319.898 5402.277 5074.053 4898.352 4541.940 4237.183 4251.528 4403.138 4230.262 4598.959
+//    [49] 4706.890 5120.359 5391.677 4776.739 5814.571 6182.879 5971.597 6065.735 6188.243 6270.939 6025.006 6602.652
+//    [61] 6232.642 5861.955 5319.898 5402.277 5074.053 4898.352 4541.940 4237.183 4251.528 4403.138 4230.262 4598.959
+//    [73] 4706.890 5120.359 5391.677 4776.739 5814.571 6182.879 5971.597 6065.735 6188.243 6270.939 6025.006 6602.652
+//    [85] 6232.642 5861.955 5319.898 5402.277 5074.053 4898.352 4541.940 4237.183 4251.528 4403.138 4230.262 4598.959
+
+    private long getTimeSpanOfSamplingQueue(CircularFifoQueue<SampleMessage> cfq){
+        if(cfq.isEmpty() || cfq.size() == 1){
             return 0;
         }
-        return (samplingQueue.get(samplingQueue.size()-1).timestamp - samplingQueue.get(0).timestamp);
+        return (cfq.get(cfq.size()-1).timestamp - cfq.get(0).timestamp);
     }
 
     @Nullable
-    private ArrayList<Long> getAllTimeStampOfSamplingQueue(){
-        if(samplingQueue.isEmpty())return null;
-        ArrayList<Long> timestampList = new ArrayList<>(samplingQueue.size());
-        for (SampleMessage sm : samplingQueue){
+    private ArrayList<Long> getAllTimeStampOfSamplingQueue(CircularFifoQueue<SampleMessage> cfq){
+        if(cfq.isEmpty())return null;
+        ArrayList<Long> timestampList = new ArrayList<>(cfq.size());
+        for (SampleMessage sm : cfq){
             timestampList.add(sm.timestamp);
         }
         return timestampList;
     }
 
     @Nullable
-    private ArrayList<byte[]> getAllPayloadOfSamplingQueue(){
-        if(samplingQueue.isEmpty()) return null;
-        ArrayList<byte[]> payloadList = new ArrayList<>(samplingQueue.size());
-        for (SampleMessage sm : samplingQueue){
+    private ArrayList<byte[]> getAllPayloadOfSamplingQueue(CircularFifoQueue<SampleMessage> cfq){
+        if(cfq.isEmpty()) return null;
+        ArrayList<byte[]> payloadList = new ArrayList<>(cfq.size());
+        for (SampleMessage sm : cfq){
             payloadList.add(sm.payload);
         }
         return payloadList;

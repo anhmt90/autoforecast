@@ -27,6 +27,8 @@ public class SubscriberHandler implements MqttCallback, Runnable{
         this.cl.subscribe(Const.DICT_TOPIC_NAME);
         this.cl.subscribe(Const.TOPIC_NAME);
         this.cl.subscribe(this.cl.getClientId());
+        System.out.println("subscribed to " + Const.TOPIC_NAME);
+
     }
 
     @Override

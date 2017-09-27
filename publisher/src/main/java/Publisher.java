@@ -22,7 +22,7 @@ public class Publisher {
 //        MqttClient cl = new MqttClient("tcp://131.159.52.29:1883", "Publisher", new MemoryPersistence());
         MqttClient cl = new MqttClient("tcp://127.0.0.1:1883", "publisher1", new MemoryPersistence());
 
-        PublisherHandler publisherHandler = new PublisherHandler(cl, it);
+        PublisherHandler publisherHandler = new PublisherHandler(cl);
         cl.setCallback(publisherHandler);
         cl.connect();
         publisherHandler.subscribeDict();
