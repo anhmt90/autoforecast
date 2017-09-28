@@ -10,7 +10,6 @@ import io.moquette.parser.proto.messages.PublishMessage;
 import io.moquette.parser.proto.messages.AbstractMessage;
 import io.moquette.server.Server;
 //import io.netty.handler.codec.mqtt.*;
-import io.moquette.spi.impl.subscriptions.Subscription;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.jetbrains.annotations.Nullable;
 import org.rosuda.REngine.REXP;
@@ -112,7 +111,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     System.out.println("#Dictionary published");
                     uncompressedCnt = 1; //reset unCommpressCnt
                     calcExpiry(samplingQueue);
-                    Thread.sleep(600000);
+                    Thread.sleep(60000);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -204,16 +203,17 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
         System.out.println("Average message size = " + avgMessageSize + " bytes" );
 
         long rate = totalSize/getTimeSpanOfSamplingQueue(cfq);
-        System.out.println("Rate = " + rate + "bytes/second");
+        System.out.println("Rate = " + rate + " bytes/second");
 
         int SD = femtoZipCompressionModel.getDictionary().length;
-        System.out.println("|SD| = " + SD + "bytes");
+        System.out.println("|SD| = " + SD + " bytes");
 
         long T1_amortize = SD/(rate * bandwidthReduction);
         System.out.println(">>>>>>>>>>>>>>>>>> CONSTANT RATE: Dictionary expires in " + (T1_amortize * 10) + " seconds");
 
         /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Calculate by FORECAST RATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
-        String forecastScript = System.getProperty("user.dir")+"/src/main/resources/forecastExpiry.R"; ;
+        String forecastScript = System.getProperty("user.dir")+"/broker/src/main/resources/forecastExpiry.R"; ;
+        System.out.println("forecastScript = "+forecastScript);
         RConnection connection = null;
         try {
              /* Create a connection to Rserve instance running on default port 6311 */
@@ -227,7 +227,6 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
             for (int i = 0; i < pointForecast.length; i++) {
                 System.out.println((i+1) + ". " + pointForecast[i]);
             }
-
 //            int sum = 0;
 //            int expiredMin = 0;
 //            int expiryAssumption = 10000; //messages

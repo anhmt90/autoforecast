@@ -12,6 +12,7 @@
     <modules>
         <module>publisher</module>
         <module>subscriber</module>
+        <module>broker</module>
     </modules>
 
     <properties>
@@ -146,15 +147,15 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-compiler-plugin</artifactId>-->
+                <!--<version>3.5.1</version>-->
+                <!--<configuration>-->
+                    <!--<source>1.8</source>-->
+                    <!--<target>1.8</target>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
             <!--<plugin>-->
             <!--<groupId>org.apache.maven.plugins</groupId>-->
             <!--<artifactId>maven-jar-plugin</artifactId>-->
@@ -167,29 +168,29 @@
             <!--</configuration>-->
             <!--</plugin>-->
 
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.3.2</version>
-                <executions>
-                    <execution>
-                        <id>SamplingBroker</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>exec-maven-plugin</artifactId>-->
+                <!--<version>1.3.2</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>SamplingBroker</id>-->
+                        <!--<goals>-->
+                            <!--<goal>java</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
 
-                </executions>
-                <configuration>
+                <!--</executions>-->
+                <!--<configuration>-->
+                    <!--&lt;!&ndash;<mainClass>SamplingBroker</mainClass>&ndash;&gt;-->
                     <!--<mainClass>samplingBroker.SamplingBroker</mainClass>-->
-                    <mainClass>samplingBroker.SamplingBroker</mainClass>
-                    <!--<cleanupDaemonThreads>false</cleanupDaemonThreads>-->
-                    <!--<executable>java</executable>-->
-                    <!--<arguments>-->
-                    <!--<argument>-Djava.library.path=.:/usr/lib/R/site-library/rJava/jri/</argument>-->
-                    <!--</arguments>-->
-                </configuration>
-            </plugin>
+                    <!--&lt;!&ndash;<cleanupDaemonThreads>false</cleanupDaemonThreads>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<executable>java</executable>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<arguments>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<argument>-Djava.library.path=.:/usr/lib/R/site-library/rJava/jri/</argument>&ndash;&gt;-->
+                    <!--&lt;!&ndash;</arguments>&ndash;&gt;-->
+                <!--</configuration>-->
+            <!--</plugin>-->
             <!--<plugin>-->
                 <!--<groupId>org.apache.maven.plugins</groupId>-->
                 <!--<artifactId>maven-jar-plugin</artifactId>-->
