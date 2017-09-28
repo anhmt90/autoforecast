@@ -96,7 +96,12 @@ public class PublisherHandler implements MqttCallback, Runnable {
                     System.out.println("#"+uncompressedCnt+" UNCOMP " + publishMessage.length + " bytes");
                     Thread.sleep(5);
                     if(uncompressedCnt == 1000){
-                        Thread.sleep(600000);
+                        while(empty) {
+                            Thread.sleep(5000);
+                            synchronized (dictionaries) {
+                                empty = dictionaries.isEmpty();
+                            }
+                        }
                     }
                 }
                         /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  Compression >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/

@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.apache.commons.lang3.math.NumberUtils.max;
+import static org.apache.commons.lang3.math.NumberUtils.min;
 
 /**
  * Created by chris on 19.02.16.
@@ -110,8 +111,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     publishNewDictionary(Const.DICT_TOPIC_NAME, dictionary);
                     System.out.println("#Dictionary published");
                     uncompressedCnt = 1; //reset unCommpressCnt
-                    calcExpiry1(samplingQueue);
-                    calcExpiry2();
+                    calcExpiry(samplingQueue);
                     Thread.sleep(600000);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -174,7 +174,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
 
 
 
-    private void calcExpiry1(CircularFifoQueue<SampleMessage> cfq) throws IOException {
+    private void calcExpiry(CircularFifoQueue<SampleMessage> cfq) throws IOException {
         ArrayList<byte[]> N = getAllPayloadOfSamplingQueue(cfq);
 
         int splitPos = (int)(cfq.size()*0.7);
@@ -184,6 +184,8 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
         FemtoZipCompressionModel femtoZipCompressionModel = new FemtoZipCompressionModel();
         femtoZipCompressionModel.build(new ArrayDocumentList(N_train));
 
+        /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Calculate by CONSTANT RATE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
+
         int TB_test = 0;
         for(byte[] testPayload : N_test)
             TB_test += testPayload.length;
@@ -192,53 +194,63 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
         for(byte[] testPayload : N_test)
             CTB_test += femtoZipCompressionModel.compress(testPayload).length;
 
-
-        long bandwidthReduction = 1 - (CTB_test/TB_test);
-
         long totalSize = 0;
         for(byte[] testPayload : N){
             totalSize = totalSize + testPayload.length;
         }
-        System.out.println("Average message size = " + (totalSize/N.size()) );
-        long messageRate = totalSize/getTimeSpanOfSamplingQueue(cfq);
-        System.out.println("Message rate = " + messageRate );
 
-        long T_amortize = femtoZipCompressionModel.getDictionary().length/(bandwidthReduction * messageRate);
-        System.out.println("|SD| = " + femtoZipCompressionModel.getDictionary().length);
-        System.out.println(">>>>>>>>>>>>>>>>>> FORMULA: Dictionary expires in " + (T_amortize * 10) + " seconds");
-    }
+        long bandwidthReduction = 1 - (CTB_test/TB_test);
+        double avgMessageSize = totalSize/N.size();
+        System.out.println("Average message size = " + avgMessageSize + " bytes" );
 
-    private void calcExpiry2(){
+        long rate = totalSize/getTimeSpanOfSamplingQueue(cfq);
+        System.out.println("Rate = " + rate + "bytes/second");
+
+        int SD = femtoZipCompressionModel.getDictionary().length;
+        System.out.println("|SD| = " + SD + "bytes");
+
+        long T1_amortize = SD/(rate * bandwidthReduction);
+        System.out.println(">>>>>>>>>>>>>>>>>> CONSTANT RATE: Dictionary expires in " + (T1_amortize * 10) + " seconds");
+
+        /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Calculate by FORECAST RATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
         String forecastScript = System.getProperty("user.dir")+"/src/main/resources/forecastExpiry.R"; ;
         RConnection connection = null;
         try {
-             /* Create a connection to Rserve instance running
-              * on default port 6311
-              */
+             /* Create a connection to Rserve instance running on default port 6311 */
             connection = new RConnection();
-
             connection.eval(String.format("source('%s')", forecastScript));
             REXP res = connection.eval("result$mean");
 
-            int pointForecast[] = res.asIntegers();
-            int sum = 0;
-            int expiredMin = 0;
-            int expiryAssumption = 10000; //messages
-            System.out.println("Point forecasts: ");
+            double pointForecast[] = res.asDoubles(); //messages per hour
+
+            System.out.println("Point forecasts (messages per hour): ");
             for (int i = 0; i < pointForecast.length; i++) {
-                System.out.println(pointForecast[i]);
+                System.out.println((i+1) + ". " + pointForecast[i]);
             }
 
-            for (int i = 0; i < pointForecast.length - 1; i++) {
-                if((sum + pointForecast[i]) < expiryAssumption){
-                    sum += pointForecast[i];
-                    expiredMin += 60;
-                } else {
-                    expiredMin += (expiryAssumption - sum)*60/pointForecast[i];
+//            int sum = 0;
+//            int expiredMin = 0;
+//            int expiryAssumption = 10000; //messages
+//            for (int i = 0; i < pointForecast.length - 1; i++) {
+//                if((sum + pointForecast[i]) < expiryAssumption){
+//                    sum += pointForecast[i];
+//                    expiredMin += 60;
+//                } else {
+//                    expiredMin += (expiryAssumption - sum)*60/pointForecast[i];
+//                    break;
+//                }
+//            }
+            double T2_amortize = 0;
+            double SDRest = SD;
+            for (int i = 0; i < pointForecast.length; i++) {
+                double ratePerSecond =  (pointForecast[i] * avgMessageSize)/(3600); //bytes per second of the point forecast
+                T2_amortize += min((SDRest/(ratePerSecond * bandwidthReduction)), 3600);
+                SDRest = SDRest - (3600*ratePerSecond*bandwidthReduction);
+
+                if(SDRest <= 0)
                     break;
-                }
             }
-            System.out.println(">>>>>>>>>>>>>>>>>> FORECAST: Dictionary expires in " + expiredMin + " minutes");
+            System.out.println(">>>>>>>>>>>>>>>>>> FORECAST RATES: Dictionary expires in " + (T2_amortize * 10) + " seconds");
 
         } catch (REXPMismatchException e) {
             e.printStackTrace();
@@ -246,6 +258,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
             e.printStackTrace();
         }
     }
+
 
 //    [1] 4706.890 5120.359 5391.677 4776.739 5814.571 6182.879 5971.597 6065.735 6188.243 6270.939 6025.006 6602.652
 //    [13] 6232.642 5861.955 5319.898 5402.277 5074.053 4898.352 4541.940 4237.183 4251.528 4403.138 4230.262 4598.959
