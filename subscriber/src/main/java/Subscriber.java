@@ -9,7 +9,7 @@ public class Subscriber {
         System.out.println("<<<<<<<<<<<<<<<<<<<< Starting Subscriber >>>>>>>>>>>>>>>>>>>>");
 
 //        MqttClient cl = new MqttClient("tcp://localhost:1883", "Subscriber", new MemoryPersistence());
-        MqttClient cl = new MqttClient("tcp://127.0.0.1:1883", "subscriber1", new MemoryPersistence());
+        MqttClient cl = new MqttClient("tcp://172.24.51.232:1883", "subscriber1", new MemoryPersistence());
 
         SubscriberHandler susbscriberHandler = new SubscriberHandler(cl);
         cl.setCallback(susbscriberHandler);
