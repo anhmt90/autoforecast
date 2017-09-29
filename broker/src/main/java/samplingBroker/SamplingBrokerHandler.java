@@ -101,7 +101,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     femtoZipCompressionModel.setMaxDictionaryLength(2000000); //Todo make it better
                     femtoZipCompressionModel.build(new ArrayDocumentList(getAllPayloadOfSamplingQueue(samplingQueue)));
                     System.out.println("#Dictionary built");
-
+                    calcExpiry(samplingQueue);
                     //Caching the sampled dictionary
                     FemtoFactory.toCache(femtoZipCompressionModel);
 
@@ -110,7 +110,7 @@ public class SamplingBrokerHandler extends AbstractInterceptHandler {
                     publishNewDictionary(Const.DICT_TOPIC_NAME, dictionary);
                     System.out.println("#Dictionary published");
                     uncompressedCnt = 1; //reset unCommpressCnt
-                    calcExpiry(samplingQueue);
+
                     Thread.sleep(60000);
                 } catch (IOException e) {
                     e.printStackTrace();
